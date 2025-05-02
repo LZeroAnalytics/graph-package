@@ -1,4 +1,4 @@
-postgres = import_module("github.com/kurtosis-tech/postgres-package/main.star")
+postgres = import_module("github.com/LZeroAnalytics/postgres-package/main.star")
 ethereum = import_module("github.com/LZeroAnalytics/ethereum-package/main.star")
 
 # The min/max CPU/memory that postgres can use
