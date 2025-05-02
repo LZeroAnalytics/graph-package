@@ -10,6 +10,7 @@ def run(plan, ethereum_args, rpc_url=None, env="main"):
     ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
 
     if not rpc_url:
+        plan.print("Running the ethereum package")
         result = ethereum.run(plan, ethereum_args)
         first = result.all_participants[0]
         rpc_url = "http://{}:{}".format(first.el_context.ip_addr, first.el_context.rpc_port_num)
