@@ -4,7 +4,7 @@ POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 32
 POSTGRES_MAX_MEMORY = 1024
 
-def run(plan, ethereum_args, rpc_url=None, env="prod"):
+def run(plan, ethereum_args, rpc_url=None, env="main"):
 
     postgres = import_module("github.com/LZeroAnalytics/postgres-package@{}/main.star".format(env))
     ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
