@@ -1,13 +1,13 @@
-postgres = import_module("github.com/LZeroAnalytics/postgres-package/main.star")
-ethereum = import_module("github.com/LZeroAnalytics/ethereum-package/main.star")
-
 # The min/max CPU/memory that postgres can use
 POSTGRES_MIN_CPU = 10
 POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 32
 POSTGRES_MAX_MEMORY = 1024
 
-def run(plan, ethereum_args, rpc_url=None):
+def run(plan, ethereum_args, rpc_url=None, env="prod"):
+
+    postgres = import_module("github.com/LZeroAnalytics/postgres-package@{}/main.star".format(env))
+    ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
 
     if not rpc_url:
         result = ethereum.run(plan, ethereum_args)
