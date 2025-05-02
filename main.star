@@ -71,4 +71,4 @@ def run(plan, ethereum_args, rpc_url=None, env="main"):
         )
     )
 
-    plan.print(graph_output)
+    return graph_output
