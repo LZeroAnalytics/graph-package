@@ -1,4 +1,5 @@
 postgres = import_module("github.com/kurtosis-tech/postgres-package/main.star")
+ethereum = import_module("github.com/LZeroAnalytics/ethereum-package/main.star")
 
 # The min/max CPU/memory that postgres can use
 POSTGRES_MIN_CPU = 10
@@ -6,7 +7,12 @@ POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 32
 POSTGRES_MAX_MEMORY = 1024
 
-def run(plan, rpc_url):
+def run(plan, ethereum_args, rpc_url=None):
+
+    if rpc_url is None:
+        result = ethereum.run(plan, ethereum_args)
+        first = result.all_participants[0]
+        rpc_url = "http://{}:{}".format(first.el_context.ip_addr, first.el_context.rpc_port_num)
 
     postgres_output = postgres.run(
         plan,
