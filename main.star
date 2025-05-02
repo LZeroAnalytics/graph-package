@@ -71,4 +71,10 @@ def run(plan, ethereum_args, rpc_url=None, env="main"):
         )
     )
 
-    return graph_output
+    graph_services = struct(
+        postgres = postgres_output,
+        ipfs = ipfs_output,
+        graph = graph_output
+    )
+
+    return graph_services
