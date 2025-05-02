@@ -9,7 +9,7 @@ POSTGRES_MAX_MEMORY = 1024
 
 def run(plan, ethereum_args, rpc_url=None):
 
-    if rpc_url is None:
+    if not rpc_url:
         result = ethereum.run(plan, ethereum_args)
         first = result.all_participants[0]
         rpc_url = "http://{}:{}".format(first.el_context.ip_addr, first.el_context.rpc_port_num)
