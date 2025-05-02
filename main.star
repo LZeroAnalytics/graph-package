@@ -1,4 +1,4 @@
-postgres = import_module("github.com/tiljrd/postgres-package/main.star")
+postgres = import_module("github.com/kurtosis-tech/postgres-package/main.star")
 
 # The min/max CPU/memory that postgres can use
 POSTGRES_MIN_CPU = 10
@@ -6,9 +6,7 @@ POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 32
 POSTGRES_MAX_MEMORY = 1024
 
-def run(plan, args={}):
-
-    rpc_url = args["rpc"]
+def run(plan, rpc_url):
 
     postgres_output = postgres.run(
         plan,
