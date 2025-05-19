@@ -1,1 +1,23 @@
 name: "github.com/LZeroAnalytics/graph-package"
+description: |
+  Graph Node
+  ==========
+  This Kurtosis package instantiates a Graph Node environment with PostgreSQL database and IPFS node for indexing and querying blockchain data through GraphQL APIs.
+
+  Prerequisites
+  -------------
+  - Access to an Ethereum node with RPC endpoints
+  - Subgraph definitions to deploy (optional)
+
+  Configuration
+  -------------
+  To configure this package, you'll need to provide the following information:
+  - `ethereum_args`: Ethereum configuration parameters for connecting to nodes
+  - `network_type`: Network type, defaults to "bloctopus"
+  - `rpc_url`: Optional custom RPC URL to connect to (if not using ethereum_args)
+  - `env`: Environment setting, defaults to "main"
+  
+  The package automatically configures resource limits for the components:
+  - PostgreSQL: CPU (10-1000) and memory (32-1024MB)
+  - Graph Node: Connects to Ethereum, PostgreSQL, and IPFS services
+  - IPFS: Provides storage for subgraph definitions
