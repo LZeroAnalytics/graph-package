@@ -4,7 +4,7 @@ POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 32
 POSTGRES_MAX_MEMORY = 1024
 
-def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="main"):
+def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="main", prefix=""):
 
     plan.print("Running graph package on branch {}".format(env))
 
@@ -19,7 +19,7 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
 
     postgres_output = postgres.run(
         plan,
-        service_name="postgres",
+        service_name="{}postgres".format(prefix),
         min_cpu=POSTGRES_MIN_CPU,
         max_cpu=POSTGRES_MAX_CPU,
         min_memory=POSTGRES_MIN_MEMORY,
@@ -35,7 +35,7 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     postgres_database = postgres_output.database
 
     ipfs_output = plan.add_service(
-        name="ipfs",
+        name="{}ipfs".format(prefix),
         config=ServiceConfig(
             image="ipfs/kubo:master-latest",
             ports={
@@ -53,7 +53,7 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     plan.print(ipfs_url)
 
     graph_output = plan.add_service(
-        name="graph-node",
+        name="{}graph-node".format(prefix),
         config=ServiceConfig(
             image="graphprotocol/graph-node",
             ports={
