@@ -97,20 +97,20 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         toml_content += "shard = \"primary\"\n"
         toml_content += "indexers = [\"default\"]\n"
         
-        # Create TOML config as a files artifact using store_service_files
+        # Create a temporary service to generate the config file
+        temp_service = plan.add_service(
+            name="temp-config-creator",
+            config=ServiceConfig(
+                image="alpine:latest",
+                cmd=["sh", "-c", "echo '" + toml_content.replace("'", "'\"'\"'") + "' > /tmp/config.toml && sleep 10"]
+            )
+        )
+        
+        # Store the generated config file as an artifact
         config_artifact = plan.store_service_files(
             service_name="temp-config-creator",
             src="/tmp/config.toml",
             name="graph-node-config"
-        )
-        
-        # Create a temporary service to generate the config file
-        plan.add_service(
-            name="temp-config-creator",
-            config=ServiceConfig(
-                image="alpine:latest",
-                cmd=["sh", "-c", "echo '" + toml_content.replace("'", "'\"'\"'") + "' > /tmp/config.toml && sleep 5"]
-            )
         )
         
         files["/etc/graph-node/config.toml"] = config_artifact
