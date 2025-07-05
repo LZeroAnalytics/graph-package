@@ -61,6 +61,12 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         "ipfs": ipfs_url,
         "ethereum": "{}:{}".format(network_type, rpc_url)
     }
+    
+    files = {}
+    
+    # Add substreams configuration if endpoint is provided
+    if ethereum_args and "substreams_endpoint" in ethereum_args:
+        substreams_endpoint = ethereum_args["substreams_endpoint"]
         # Use environment variables instead of config file to avoid template issues
         env_vars["GRAPH_SUBSTREAMS_ENDPOINT"] = substreams_endpoint
         env_vars["GRAPH_SUBSTREAMS_NETWORK"] = network_type
