@@ -67,14 +67,12 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         substreams_endpoint = ethereum_args["substreams_endpoint"]
         env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
         # Create a basic config that includes substreams endpoint
-        config_content = """
-[chains.{}]
+        config_content = """[chains.{}]
 shard = "primary"
 provider = [
-  {{ label = "ethereum-rpc", url = "{}", features = ["archive", "traces"] }},
-  {{ label = "substreams", url = "{}", features = ["substreams"] }}
-]
-""".format(network_type, rpc_url, substreams_endpoint)
+  {{{{ label = "ethereum-rpc", url = "{}", features = ["archive", "traces"] }}}},
+  {{{{ label = "substreams", url = "{}", features = ["substreams"] }}}}
+]""".format(network_type, rpc_url, substreams_endpoint)
         
         # Store config as a file artifact
         config_artifact = plan.render_templates(
