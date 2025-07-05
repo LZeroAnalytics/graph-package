@@ -67,9 +67,46 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     # Add substreams configuration if endpoint is provided
     if ethereum_args and "substreams_endpoint" in ethereum_args:
         substreams_endpoint = ethereum_args["substreams_endpoint"]
-        # Use environment variables instead of config file to avoid template issues
-        env_vars["GRAPH_SUBSTREAMS_ENDPOINT"] = substreams_endpoint
-        env_vars["GRAPH_SUBSTREAMS_NETWORK"] = network_type
+        
+        # Create TOML configuration content as a simple string
+        toml_content = "[general]\n\n"
+        toml_content += "[store]\n"
+        toml_content += "[store.primary]\n"
+        toml_content += "connection = \"postgresql://" + postgres_user + ":" + postgres_password + "@" + postgres_hostname + ":5432/" + postgres_database + "\"\n"
+        toml_content += "weight = 1\n"
+        toml_content += "pool_size = 10\n\n"
+        toml_content += "[chains]\n"
+        toml_content += "ingestor = \"block_ingestor_node\"\n\n"
+        toml_content += "[chains." + network_type + "]\n"
+        toml_content += "protocol = \"substreams\"\n"
+        toml_content += "shard = \"primary\"\n"
+        toml_content += "provider = [\n"
+        toml_content += "    { label = \"substreams\", details = { type = \"substreams\", url = \"" + substreams_endpoint + "\", features = [\n"
+        toml_content += "        \"compression\",\n"
+        toml_content += "        \"filters\",\n"
+        toml_content += "    ], conn_pool_size = 1 } },\n"
+        toml_content += "]\n\n"
+        toml_content += "[chains." + network_type + "-rpc]\n"
+        toml_content += "protocol = \"ethereum\"\n"
+        toml_content += "shard = \"primary\"\n"
+        toml_content += "provider = [\n"
+        toml_content += "    { label = \"rpc\", details = { type = \"web3\", url = \"" + rpc_url + "\", features = [] } },\n"
+        toml_content += "]\n\n"
+        toml_content += "[deployment]\n"
+        toml_content += "[[deployment.rule]]\n"
+        toml_content += "shard = \"primary\"\n"
+        toml_content += "indexers = [\"default\"]\n"
+        
+        # Write TOML content to a temporary file and upload it
+        plan.run_sh("echo '" + toml_content + "' > /tmp/graph-config.toml")
+        
+        config_artifact = plan.upload_files(
+            src="/tmp/graph-config.toml",
+            name="graph-node-config"
+        )
+        
+        files["/etc/graph-node/config.toml"] = config_artifact
+        env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
 
     graph_output = plan.add_service(
         name="{}graph-node".format(prefix),
