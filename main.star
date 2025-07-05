@@ -84,17 +84,17 @@ ingestor = "block_ingestor_node"
 protocol = "substreams"
 shard = "primary"
 provider = [
-    {{ label = "substreams", details = {{ type = "substreams", url = "{}", features = [
+    {{{{ label = "substreams", details = {{{{ type = "substreams", url = "{}", features = [
         "compression",
         "filters",
-    ], conn_pool_size = 1 }} }},
+    ], conn_pool_size = 1 }}}} }}}},
 ]
 
 [chains.{}-rpc]
 protocol = "ethereum"
 shard = "primary"
 provider = [
-    {{ label = "rpc", details = {{ type = "web3", url = "{}", features = [] }} }},
+    {{{{ label = "rpc", details = {{{{ type = "web3", url = "{}", features = [] }}}} }}}},
 ]
 
 [deployment]
