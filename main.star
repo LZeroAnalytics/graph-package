@@ -57,20 +57,47 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         config=ServiceConfig(
             image="graphprotocol/graph-node",
             ports={
-                "http": PortSpec(number=8000, transport_protocol="TCP", application_protocol="http", wait=None),
-                "ws": PortSpec(number=8001, transport_protocol="TCP", wait=None),
-                "rpc": PortSpec(number=8020, transport_protocol="TCP", wait=None),
-                "api": PortSpec(number=8030, transport_protocol="TCP", wait=None),
-                "prometheus": PortSpec(number=8040, transport_protocol="TCP", wait=None)
-            },
-            env_vars = {
-                "postgres_host": postgres_hostname,
-                "postgres_user": postgres_user,
-                "postgres_pass": postgres_password,
-                "postgres_db": postgres_database,
-                "ipfs": ipfs_url,
-                "ethereum": "{}:{}".format(network_type, rpc_url)
-            }
+    # Build environment variables
+    env_vars = {
+        "postgres_host": postgres_hostname,
+        "postgres_user": postgres_user,
+        "postgres_pass": postgres_password,
+        "postgres_db": postgres_database,
+        "ipfs": ipfs_url,
+        "ethereum": "{}:{}".format(network_type, rpc_url)
+    }
+    
+    # Add substreams support if endpoint is provided
+    if ethereum_args and "substreams_endpoint" in ethereum_args:
+        substreams_endpoint = ethereum_args["substreams_endpoint"]
+        env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
+        # Create a basic config that includes substreams endpoint
+        config_content = """
+[chains.{}]
+shard = "primary"
+provider = [
+  {{ label = "ethereum-rpc", url = "{}", features = ["archive", "traces"] }},
+  {{ label = "substreams", url = "{}", features = ["substreams"] }}
+]
+""".format(network_type, rpc_url, substreams_endpoint)
+        
+        # Store config as a file artifact
+        config_artifact = plan.render_templates(
+            config={{
+                "config.toml": struct(
+                    template=config_content,
+                    data={{}}
+                )
+            }},
+            name="graph-node-config"
+        )
+        
+        # Mount the config file
+        files = {{
+            "/etc/graph-node/": config_artifact
+        }}
+    else:
+        files = {{}}
         )
     )
 
