@@ -67,54 +67,8 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     # Add substreams configuration if endpoint is provided
     if ethereum_args and "substreams_endpoint" in ethereum_args:
         substreams_endpoint = ethereum_args["substreams_endpoint"]
-        
-        # Create TOML configuration content as a simple string
-        toml_content = "[general]\n\n"
-        toml_content += "[store]\n"
-        toml_content += "[store.primary]\n"
-        toml_content += "connection = \"postgresql://" + postgres_user + ":" + postgres_password + "@" + postgres_hostname + ":5432/" + postgres_database + "\"\n"
-        toml_content += "weight = 1\n"
-        toml_content += "pool_size = 10\n\n"
-        toml_content += "[chains]\n"
-        toml_content += "ingestor = \"block_ingestor_node\"\n\n"
-        toml_content += "[chains." + network_type + "]\n"
-        toml_content += "protocol = \"substreams\"\n"
-        toml_content += "shard = \"primary\"\n"
-        toml_content += "provider = [\n"
-        toml_content += "    { label = \"substreams\", details = { type = \"substreams\", url = \"" + substreams_endpoint + "\", features = [\n"
-        toml_content += "        \"compression\",\n"
-        toml_content += "        \"filters\",\n"
-        toml_content += "    ], conn_pool_size = 1 } },\n"
-        toml_content += "]\n\n"
-        toml_content += "[chains." + network_type + "-rpc]\n"
-        toml_content += "protocol = \"ethereum\"\n"
-        toml_content += "shard = \"primary\"\n"
-        toml_content += "provider = [\n"
-        toml_content += "    { label = \"rpc\", details = { type = \"web3\", url = \"" + rpc_url + "\", features = [] } },\n"
-        toml_content += "]\n\n"
-        toml_content += "[deployment]\n"
-        toml_content += "[[deployment.rule]]\n"
-        toml_content += "shard = \"primary\"\n"
-        toml_content += "indexers = [\"default\"]\n"
-        
-        # Create a temporary service to generate the config file
-        temp_service = plan.add_service(
-            name="temp-config-creator",
-            config=ServiceConfig(
-                image="alpine:latest",
-                cmd=["sh", "-c", "echo '" + toml_content.replace("'", "'\"'\"'") + "' > /tmp/config.toml && sleep 10"]
-            )
-        )
-        
-        # Store the generated config file as an artifact
-        config_artifact = plan.store_service_files(
-            service_name="temp-config-creator",
-            src="/tmp/config.toml",
-            name="graph-node-config"
-        )
-        
-        files["/etc/graph-node/config.toml"] = config_artifact
-        env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
+        # Replace ethereum env var with substreams when substreams endpoint is provided
+        env_vars["substreams"] = "{}:{}".format(network_type, substreams_endpoint)
 
     graph_output = plan.add_service(
         name="{}graph-node".format(prefix),
