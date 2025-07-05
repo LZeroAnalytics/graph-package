@@ -65,32 +65,11 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     # Add substreams support if endpoint is provided
     if ethereum_args and "substreams_endpoint" in ethereum_args:
         substreams_endpoint = ethereum_args["substreams_endpoint"]
-        env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
-        # Create a basic config that includes substreams endpoint
-        config_content = """[chains.{}]
-shard = "primary"
-provider = [
-  {{{{ label = "ethereum-rpc", url = "{}", features = ["archive", "traces"] }}}},
-  {{{{ label = "substreams", url = "{}", features = ["substreams"] }}}}
-]""".format(network_type, rpc_url, substreams_endpoint)
-        
-        # Store config as a file artifact
-        config_artifact = plan.render_templates(
-            config={
-                "config.toml": struct(
-                    template=config_content,
-                    data={}
-                )
-            },
-            name="graph-node-config"
-        )
-        
-        # Mount the config file
-        files = {
-            "/etc/graph-node/": config_artifact
-        }
-    else:
-        files = {}
+        # Add substreams endpoint as environment variable
+        env_vars["GRAPH_ETHEREUM_SUBSTREAMS_ENDPOINT"] = substreams_endpoint
+        env_vars["GRAPH_ETHEREUM_SUBSTREAMS_NETWORK"] = network_type
+    
+    files = {}
 
     graph_output = plan.add_service(
         name="{}graph-node".format(prefix),
