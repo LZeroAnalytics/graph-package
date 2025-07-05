@@ -97,11 +97,14 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         toml_content += "shard = \"primary\"\n"
         toml_content += "indexers = [\"default\"]\n"
         
-        # Write TOML content to a temporary file and upload it
-        plan.run_sh("echo '" + toml_content + "' > /tmp/graph-config.toml")
-        
-        config_artifact = plan.upload_files(
-            src="/tmp/graph-config.toml",
+        # Create TOML config as a files artifact
+        config_artifact = plan.render_templates(
+            config={
+                "config.toml": struct(
+                    template=toml_content,
+                    data={}
+                )
+            },
             name="graph-node-config"
         )
         
