@@ -59,16 +59,14 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         "postgres_pass": postgres_password,
         "postgres_db": postgres_database,
         "ipfs": ipfs_url,
+        "ethereum": "{}:{}".format(network_type, rpc_url)
     }
     
-    # Configure substreams if endpoint is provided, otherwise use ethereum RPC
+    # Add substreams configuration if endpoint is provided
     if ethereum_args and "substreams_endpoint" in ethereum_args:
         substreams_endpoint = ethereum_args["substreams_endpoint"]
-        # Use substreams instead of ethereum RPC
+        # Add substreams endpoint alongside ethereum RPC
         env_vars["substreams"] = "{}:{}".format(network_type, substreams_endpoint)
-    else:
-        # Default to ethereum RPC
-        env_vars["ethereum"] = "{}:{}".format(network_type, rpc_url)
     
     files = {}
 
