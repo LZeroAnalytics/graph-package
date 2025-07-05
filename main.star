@@ -52,11 +52,6 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     plan.print(ipfs_output)
     plan.print(ipfs_url)
 
-    graph_output = plan.add_service(
-        name="{}graph-node".format(prefix),
-        config=ServiceConfig(
-            image="graphprotocol/graph-node",
-            ports={
     # Build environment variables
     env_vars = {
         "postgres_host": postgres_hostname,
@@ -83,21 +78,35 @@ provider = [
         
         # Store config as a file artifact
         config_artifact = plan.render_templates(
-            config={{
+            config={
                 "config.toml": struct(
                     template=config_content,
-                    data={{}}
+                    data={}
                 )
-            }},
+            },
             name="graph-node-config"
         )
         
         # Mount the config file
-        files = {{
+        files = {
             "/etc/graph-node/": config_artifact
-        }}
+        }
     else:
-        files = {{}}
+        files = {}
+
+    graph_output = plan.add_service(
+        name="{}graph-node".format(prefix),
+        config=ServiceConfig(
+            image="graphprotocol/graph-node",
+            ports={
+                "http": PortSpec(number=8000, transport_protocol="TCP", application_protocol="http", wait=None),
+                "ws": PortSpec(number=8001, transport_protocol="TCP", wait=None),
+                "rpc": PortSpec(number=8020, transport_protocol="TCP", wait=None),
+                "api": PortSpec(number=8030, transport_protocol="TCP", wait=None),
+                "prometheus": PortSpec(number=8040, transport_protocol="TCP", wait=None)
+            },
+            env_vars=env_vars,
+            files=files
         )
     )
 
