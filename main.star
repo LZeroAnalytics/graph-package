@@ -62,13 +62,57 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         "ethereum": "{}:{}".format(network_type, rpc_url)
     }
     
+    files = {}
+    
     # Add substreams configuration if endpoint is provided
     if ethereum_args and "substreams_endpoint" in ethereum_args:
         substreams_endpoint = ethereum_args["substreams_endpoint"]
-        # Add substreams endpoint alongside ethereum RPC
-        env_vars["substreams"] = "{}:{}".format(network_type, substreams_endpoint)
-    
-    files = {}
+        
+        # Create TOML configuration for substreams support
+        config_toml = """[general]
+
+[store]
+[store.primary]
+connection = "postgresql://{}:{}@{}:{}/{}"
+weight = 1
+pool_size = 10
+
+[chains]
+ingestor = "block_ingestor_node"
+
+[chains.{}]
+protocol = "substreams"
+shard = "primary"
+provider = [
+    {{ label = "substreams", details = {{ type = "substreams", url = "{}", features = [
+        "compression",
+        "filters",
+    ], conn_pool_size = 1 }} }},
+]
+
+[chains.{}-rpc]
+protocol = "ethereum"
+shard = "primary"
+provider = [
+    {{ label = "rpc", details = {{ type = "web3", url = "{}", features = [] }} }},
+]
+
+[deployment]
+[[deployment.rule]]
+shard = "primary"
+indexers = ["default"]
+""".format(postgres_user, postgres_password, postgres_hostname, "5432", postgres_database, network_type, substreams_endpoint, network_type, rpc_url)
+        
+        # Create config file artifact
+        config_artifact = plan.render_templates(
+            config={
+                "config.toml": struct(template=config_toml, data={})
+            },
+            name="graph-node-config"
+        )
+        
+        files["/etc/graph-node"] = config_artifact
+        env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
 
     graph_output = plan.add_service(
         name="{}graph-node".format(prefix),
