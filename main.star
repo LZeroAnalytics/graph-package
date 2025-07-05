@@ -68,45 +68,39 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     if ethereum_args and "substreams_endpoint" in ethereum_args:
         substreams_endpoint = ethereum_args["substreams_endpoint"]
         
-        # Create TOML configuration for substreams support
-        config_toml = """[general]
-
-[store]
-[store.primary]
-connection = "postgresql://{}:{}@{}:{}/{}"
-weight = 1
-pool_size = 10
-
-[chains]
-ingestor = "block_ingestor_node"
-
-[chains.{}]
-protocol = "substreams"
-shard = "primary"
-provider = [
-    {{{{ label = "substreams", details = {{{{ type = "substreams", url = "{}", features = [
-        "compression",
-        "filters",
-    ], conn_pool_size = 1 }}}} }}}},
-]
-
-[chains.{}-rpc]
-protocol = "ethereum"
-shard = "primary"
-provider = [
-    {{{{ label = "rpc", details = {{{{ type = "web3", url = "{}", features = [] }}}} }}}},
-]
-
-[deployment]
-[[deployment.rule]]
-shard = "primary"
-indexers = ["default"]
-""".format(postgres_user, postgres_password, postgres_hostname, "5432", postgres_database, network_type, substreams_endpoint, network_type, rpc_url)
+        # Create TOML configuration for substreams support without template processing
+        config_content = "[general]\n\n"
+        config_content += "[store]\n"
+        config_content += "[store.primary]\n"
+        config_content += "connection = \"postgresql://{}:{}@{}:{}/{}\"\n".format(postgres_user, postgres_password, postgres_hostname, "5432", postgres_database)
+        config_content += "weight = 1\n"
+        config_content += "pool_size = 10\n\n"
+        config_content += "[chains]\n"
+        config_content += "ingestor = \"block_ingestor_node\"\n\n"
+        config_content += "[chains.{}]\n".format(network_type)
+        config_content += "protocol = \"substreams\"\n"
+        config_content += "shard = \"primary\"\n"
+        config_content += "provider = [\n"
+        config_content += "    { label = \"substreams\", details = { type = \"substreams\", url = \"{}\", features = [\n".format(substreams_endpoint)
+        config_content += "        \"compression\",\n"
+        config_content += "        \"filters\",\n"
+        config_content += "    ], conn_pool_size = 1 } },\n"
+        config_content += "]\n\n"
+        config_content += "[chains.{}-rpc]\n".format(network_type)
+        config_content += "protocol = \"ethereum\"\n"
+        config_content += "shard = \"primary\"\n"
+        config_content += "provider = [\n"
+        config_content += "    { label = \"rpc\", details = { type = \"web3\", url = \"{}\", features = [] } },\n".format(rpc_url)
+        config_content += "]\n\n"
+        config_content += "[deployment]\n"
+        config_content += "[[deployment.rule]]\n"
+        config_content += "shard = \"primary\"\n"
+        config_content += "indexers = [\"default\"]\n"
         
-        # Create config file artifact
+        # Create config file artifact without template processing
         config_artifact = plan.render_templates(
             config={
-                "config.toml": struct(template=config_toml, data={})
+                "config.toml": struct(template=config_content, data={})
             },
             name="graph-node-config"
         )
