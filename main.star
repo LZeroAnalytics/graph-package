@@ -61,52 +61,9 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
         "ipfs": ipfs_url,
         "ethereum": "{}:{}".format(network_type, rpc_url)
     }
-    
-    files = {}
-    
-    # Add substreams configuration if endpoint is provided
-    if ethereum_args and "substreams_endpoint" in ethereum_args:
-        substreams_endpoint = ethereum_args["substreams_endpoint"]
-        
-        # Create TOML configuration for substreams support without template processing
-        config_content = "[general]\n\n"
-        config_content += "[store]\n"
-        config_content += "[store.primary]\n"
-        config_content += "connection = \"postgresql://{}:{}@{}:{}/{}\"\n".format(postgres_user, postgres_password, postgres_hostname, "5432", postgres_database)
-        config_content += "weight = 1\n"
-        config_content += "pool_size = 10\n\n"
-        config_content += "[chains]\n"
-        config_content += "ingestor = \"block_ingestor_node\"\n\n"
-        config_content += "[chains.{}]\n".format(network_type)
-        config_content += "protocol = \"substreams\"\n"
-        config_content += "shard = \"primary\"\n"
-        config_content += "provider = [\n"
-        config_content += "    { label = \"substreams\", details = { type = \"substreams\", url = \"{}\", features = [\n".format(substreams_endpoint)
-        config_content += "        \"compression\",\n"
-        config_content += "        \"filters\",\n"
-        config_content += "    ], conn_pool_size = 1 } },\n"
-        config_content += "]\n\n"
-        config_content += "[chains.{}-rpc]\n".format(network_type)
-        config_content += "protocol = \"ethereum\"\n"
-        config_content += "shard = \"primary\"\n"
-        config_content += "provider = [\n"
-        config_content += "    { label = \"rpc\", details = { type = \"web3\", url = \"{}\", features = [] } },\n".format(rpc_url)
-        config_content += "]\n\n"
-        config_content += "[deployment]\n"
-        config_content += "[[deployment.rule]]\n"
-        config_content += "shard = \"primary\"\n"
-        config_content += "indexers = [\"default\"]\n"
-        
-        # Create config file artifact without template processing
-        config_artifact = plan.render_templates(
-            config={
-                "config.toml": struct(template=config_content, data={})
-            },
-            name="graph-node-config"
-        )
-        
-        files["/etc/graph-node"] = config_artifact
-        env_vars["GRAPH_NODE_CONFIG"] = "/etc/graph-node/config.toml"
+        # Use environment variables instead of config file to avoid template issues
+        env_vars["GRAPH_SUBSTREAMS_ENDPOINT"] = substreams_endpoint
+        env_vars["GRAPH_SUBSTREAMS_NETWORK"] = network_type
 
     graph_output = plan.add_service(
         name="{}graph-node".format(prefix),
