@@ -89,6 +89,9 @@ def run(plan, args=None):
     )
     
     graph_node_config_env = args.get("graph_node", {})
+
+    chain_names = [n["key"] for n in chains]
+    disable_check_list = ",".join(chain_names)
     graph_output = plan.add_service(
         name="graph-node",
         config=ServiceConfig(
@@ -105,6 +108,7 @@ def run(plan, args=None):
                 "postgres_user": postgres_output.user,
                 "postgres_pass": postgres_output.password,
                 "postgres_db": postgres_output.database,
+                "GRAPH_NODE_FIREHOSE_DISABLE_EXTENDED_BLOCKS_FOR_CHAINS": disable_check_list,
                 "GRAPH_LOG": graph_node_config_env.get("log_level", "trace")
             },
             files={"/tmp/config/": graph_node_config},
