@@ -1,0 +1,35 @@
+specVersion: v0.1.0
+package:
+  name: cctup_substreams
+  version: v0.1.0
+  url: https://github.com/LZeroAnalytics/graph-package
+  doc: |
+    Multi-chain substreams for {{.chain_name}} transaction classification and extraction.
+    
+    This substream processes {{.chain_name}} blocks and classifies transactions into different types:
+    - Contract creation
+    - ETH transfers
+    - Contract calls with/without data
+    - Precompile calls
+
+protobuf:
+  files:
+    - cctup.proto
+  importPaths:
+    - ./proto
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/cctup_substreams.wasm
+
+modules:
+  - name: map_transactions
+    kind: map
+    initialBlock: {{.start_block}}
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:cctup.TxRecords
+
+network: {{.chain_key}}

@@ -1,23 +1,52 @@
 name: "github.com/LZeroAnalytics/graph-package"
 description: |
-  Graph Node
-  ==========
-  This Kurtosis package instantiates a Graph Node environment with PostgreSQL database and IPFS node for indexing and querying blockchain data through GraphQL APIs.
+  Multi-Chain Graph Node Orchestrator
+  ==================================
+  This Kurtosis package instantiates a complete multi-chain Graph Protocol indexing environment with PostgreSQL database, IPFS node, and per-chain Firehose instances for indexing and querying blockchain data through GraphQL APIs.
 
-  Prerequisites
-  -------------
-  - Access to an Ethereum node with RPC endpoints
-  - Subgraph definitions to deploy (optional)
+  Features
+  --------
+  - YAML-driven multi-chain configuration
+  - Automatic Firehose deployment per chain
+  - Template-based substreams and subgraph generation
+  - Automated subgraph deployment to Graph Node
+  - Support for custom RPC endpoints and block explorers
 
   Configuration
   -------------
-  To configure this package, you'll need to provide the following information:
-  - `ethereum_args`: Ethereum configuration parameters for connecting to nodes
-  - `network_type`: Network type, defaults to "bloctopus"
-  - `rpc_url`: Optional custom RPC URL to connect to (if not using ethereum_args)
-  - `env`: Environment setting, defaults to "main"
+  Provide a YAML configuration file with chain definitions:
+  ```yaml
+  chains:
+    - id: 9312546
+      key: "arbitrum-fork"
+      name: "Arbitrum Fork"
+      rpc_url: "https://your-rpc-url/"
+      explorer:
+        name: "blockscout"
+        api_url: "https://api.arbiscan.io/api"
+        url: "https://arbiscan.io"
+      start_block: 1100
   
-  The package automatically configures resource limits for the components:
-  - PostgreSQL: CPU (10-1000) and memory (32-1024MB)
-  - Graph Node: Connects to Ethereum, PostgreSQL, and IPFS services
-  - IPFS: Provides storage for subgraph definitions
+  postgres:
+    min_cpu: 10
+    max_cpu: 1000
+    min_memory: 32
+    max_memory: 1024
+  
+  graph_node:
+    log_level: "trace"
+  ```
+
+  Usage
+  -----
+  ```bash
+  kurtosis run --enclave multi-chain-test . --args-file config.yaml
+  ```
+
+  Services
+  --------
+  - PostgreSQL: Database for storing indexed data
+  - IPFS: Distributed file system for metadata storage
+  - Firehose (per chain): Block streaming service for each configured chain
+  - Graph Node: Core indexing and query engine with multi-chain support
+  - Indexer: Service for building and deploying substreams/subgraphs

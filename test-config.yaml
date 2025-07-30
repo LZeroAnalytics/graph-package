@@ -1,0 +1,29 @@
+chains:
+  - id: 9312546
+    key: "arbitrum-fork"
+    name: "Arbitrum Fork"
+    rpc_url: "https://eb6729ebca5248b7afaa008c54008875-rpc.network.dev.bloctopus.io/"
+    explorer:
+      name: "blockscout"
+      api_url: "https://api.arbiscan.io/api"
+      url: "https://arbiscan.io"
+    start_block: 1100
+    
+  - id: 6849009
+    key: "ethereum-fork"
+    name: "Ethereum Fork"
+    rpc_url: "https://b92795247eec4bdf84414854b8f338ed-rpc.network.dev.bloctopus.io/"
+    explorer:
+      name: "etherscan"
+      api_url: "https://api.etherscan.io/api"
+      url: "https://etherscan.io"
+    start_block: 1100
+
+postgres:
+  min_cpu: 10
+  max_cpu: 1000
+  min_memory: 32
+  max_memory: 1024
+
+graph_node:
+  log_level: "trace"
