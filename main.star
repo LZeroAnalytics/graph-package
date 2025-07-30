@@ -228,7 +228,7 @@ def deploy_indexer_for_chains(plan, chains, graph_output, ipfs_output):
         plan.exec(
             service_name="indexer",
             recipe=ExecRecipe(
-                command=["sh", "-c", "cd /workspace/substreams && if ! command -v rustc &> /dev/null; then curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source ~/.cargo/env && rustup target add wasm32-unknown-unknown; fi"]
+                command=["sh", "-c", "cd /workspace/substreams && if ! command -v rustc &> /dev/null; then curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . ~/.cargo/env && rustup target add wasm32-unknown-unknown; fi"]
             )
         )
         
@@ -236,7 +236,7 @@ def deploy_indexer_for_chains(plan, chains, graph_output, ipfs_output):
         plan.exec(
             service_name="indexer",
             recipe=ExecRecipe(
-                command=["sh", "-c", "cd /workspace/substreams && source ~/.cargo/env && cargo build --target wasm32-unknown-unknown --release"]
+                command=["sh", "-c", "cd /workspace/substreams && . ~/.cargo/env && cargo build --target wasm32-unknown-unknown --release"]
             )
         )
         
