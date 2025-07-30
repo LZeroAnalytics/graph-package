@@ -191,7 +191,7 @@ def deploy_indexer_for_chains(plan, chains, graph_output, ipfs_output):
                 "IPFS_URL": "http://{}:5001".format(ipfs_output.ip_address)
             },
             files=rendered_configs,
-            cmd=["sh", "-c", "apk add --no-cache curl git build-base python3 wget protobuf-dev musl-dev libc6-compat && cd /tmp && wget https://github.com/streamingfast/substreams/releases/latest/download/substreams_linux_x86_64.tar.gz && tar -xzf substreams_linux_x86_64.tar.gz && mv substreams /usr/local/bin/ && chmod +x /usr/local/bin/substreams && sleep infinity"]
+            cmd=["sh", "-c", "apk add --no-cache curl git build-base python3 wget protobuf-dev musl-dev libc6-compat && cd /tmp && ARCH=$(uname -m) && if [ \"$ARCH\" = \"aarch64\" ]; then SUBSTREAMS_ARCH=\"arm64\"; else SUBSTREAMS_ARCH=\"x86_64\"; fi && wget https://github.com/streamingfast/substreams/releases/latest/download/substreams_linux_${SUBSTREAMS_ARCH}.tar.gz && tar -xzf substreams_linux_${SUBSTREAMS_ARCH}.tar.gz && mv substreams /usr/local/bin/ && chmod +x /usr/local/bin/substreams && sleep infinity"]
         )
     )
     
