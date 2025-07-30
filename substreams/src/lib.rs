@@ -10,7 +10,7 @@ fn map_transactions(block: eth::Block) -> Result<TxRecords, Error> {
 
     for transaction in block.transaction_traces.iter() {
         if transaction.hash.is_empty() {
-            substreams::log::warn!("Skipping transaction with empty hash");
+            substreams::log::info!("Skipping transaction with empty hash");
             continue;
         }
 
@@ -20,15 +20,16 @@ fn map_transactions(block: eth::Block) -> Result<TxRecords, Error> {
             id: if !transaction.hash.is_empty() {
                 transaction.hash.clone()
             } else {
-                substreams::log::warn!("Transaction has empty hash, using placeholder");
+                substreams::log::info!("Transaction has empty hash, using placeholder");
                 vec![0u8; 32] // 32-byte placeholder hash
             },
             kind: kind.to_string(),
+            network: "unknown".to_string(), // Will be set dynamically based on chain
             raw: Some(Raw {
                 from: if !transaction.from.is_empty() {
                     transaction.from.clone()
                 } else {
-                    substreams::log::warn!("Transaction {} has empty from address", hex::encode(&transaction.hash));
+                    substreams::log::info!("Transaction {} has empty from address", hex::encode(&transaction.hash));
                     vec![0u8; 20] // 20-byte zero address as fallback
                 },
                 to: if !transaction.to.is_empty() {
@@ -49,10 +50,10 @@ fn map_transactions(block: eth::Block) -> Result<TxRecords, Error> {
                         "0x0".to_string()
                     }),
                 gas_limit: if transaction.gas_limit > 0 {
-                    transaction.gas_limit.to_string()
+                    transaction.gas_limit
                 } else {
-                    substreams::log::warn!("Transaction {} has zero gas_limit", hex::encode(&transaction.hash));
-                    "21000".to_string() // Minimum gas for a transaction
+                    substreams::log::info!("Transaction {} has zero gas_limit", hex::encode(&transaction.hash));
+                    21000 // Minimum gas for a transaction
                 },
                 gas_price: transaction.gas_price.as_ref()
                     .map(|v| {

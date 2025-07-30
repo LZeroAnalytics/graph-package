@@ -143,6 +143,44 @@ def deploy_indexer_for_chains(plan, chains, graph_output, ipfs_output):
         name="substreams-files"
     )
     
+    # Render all substream and subgraph configs for all chains
+    rendered_configs = {}
+    for chain in chains:
+        # Render substream manifest from template
+        substream_config = plan.render_templates(
+            config={
+                "substreams_{}.yaml".format(chain["key"]): struct(
+                    template=read_file("templates/substreams.yaml.tmpl"),
+                    data={
+                        "chain_key": chain["key"],
+                        "chain_name": chain.get("name", chain["key"]),
+                        "start_block": chain.get("start_block", 0)
+                    }
+                )
+            },
+            name="substream-config-{}".format(chain["key"])
+        )
+        rendered_configs["/workspace/substreams-config-{}".format(chain["key"])] = substream_config
+        
+        # Render subgraph manifest from template
+        subgraph_config = plan.render_templates(
+            config={
+                "subgraph_{}.yaml".format(chain["key"]): struct(
+                    template=read_file("templates/subgraph.yaml.tmpl"),
+                    data={
+                        "chain_key": chain["key"],
+                        "start_block": chain.get("start_block", 0)
+                    }
+                )
+            },
+            name="subgraph-config-{}".format(chain["key"])
+        )
+        rendered_configs["/workspace/subgraph-config-{}".format(chain["key"])] = subgraph_config
+    
+    # Add base files to the rendered configs
+    rendered_configs["/workspace/subgraph"] = subgraph_files
+    rendered_configs["/workspace/substreams"] = substreams_files
+    
     # Add indexer service for building and deploying substreams/subgraphs
     indexer_service = plan.add_service(
         name="indexer",
@@ -152,11 +190,8 @@ def deploy_indexer_for_chains(plan, chains, graph_output, ipfs_output):
                 "GRAPH_NODE_URL": "http://{}:8020".format(graph_output.ip_address),
                 "IPFS_URL": "http://{}:5001".format(ipfs_output.ip_address)
             },
-            files={
-                "/workspace/subgraph": subgraph_files,
-                "/workspace/substreams": substreams_files
-            },
-            cmd=["sh", "-c", "apk add --no-cache curl git build-base python3 && sleep infinity"]
+            files=rendered_configs,
+            cmd=["sh", "-c", "apk add --no-cache curl git build-base python3 wget protobuf-dev musl-dev libc6-compat && cd /tmp && wget https://github.com/streamingfast/substreams/releases/latest/download/substreams_linux_x86_64.tar.gz && tar -xzf substreams_linux_x86_64.tar.gz && mv substreams /usr/local/bin/ && chmod +x /usr/local/bin/substreams && sleep infinity"]
         )
     )
     
@@ -179,30 +214,47 @@ def deploy_indexer_for_chains(plan, chains, graph_output, ipfs_output):
         )
     )
     
-    # Copy and rename existing substreams packages for each chain
+    # Generate and build substreams packages dynamically for each chain
     for chain in chains:
+        # Copy the rendered substream config to the workspace
         plan.exec(
             service_name="indexer",
             recipe=ExecRecipe(
-                command=["sh", "-c", "cp /workspace/substreams/sepolia.spkg /workspace/substreams/{}.spkg".format(chain["key"])]
+                command=["sh", "-c", "cp /workspace/substreams-config-{}/substreams_{}.yaml /workspace/substreams/".format(chain["key"], chain["key"])]
+            )
+        )
+        
+        # Install Rust and wasm32 target if not already installed
+        plan.exec(
+            service_name="indexer",
+            recipe=ExecRecipe(
+                command=["sh", "-c", "cd /workspace/substreams && if ! command -v rustc &> /dev/null; then curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source ~/.cargo/env && rustup target add wasm32-unknown-unknown; fi"]
+            )
+        )
+        
+        # Compile Rust to WASM
+        plan.exec(
+            service_name="indexer",
+            recipe=ExecRecipe(
+                command=["sh", "-c", "cd /workspace/substreams && source ~/.cargo/env && cargo build --target wasm32-unknown-unknown --release"]
+            )
+        )
+        
+        # Pack substream
+        plan.exec(
+            service_name="indexer",
+            recipe=ExecRecipe(
+                command=["sh", "-c", "cd /workspace/substreams && /usr/local/bin/substreams pack substreams_{}.yaml -o {}.spkg".format(chain["key"], chain["key"])]
             )
         )
     
     # Build and deploy substreams/subgraphs for each chain
     for chain in chains:
-        # Generate subgraph config for this chain
+        # Copy the rendered subgraph config to the workspace
         plan.exec(
             service_name="indexer",
             recipe=ExecRecipe(
-                command=["sh", "-c", "cd /workspace/subgraph && cp subgraph_sepolia.yaml subgraph_{}.yaml".format(chain["key"])]
-            )
-        )
-        
-        # Update the subgraph config with chain-specific values
-        plan.exec(
-            service_name="indexer",
-            recipe=ExecRecipe(
-                command=["sh", "-c", "cd /workspace/subgraph && sed -i 's/sepolia/{}/g' subgraph_{}.yaml".format(chain["key"], chain["key"])]
+                command=["sh", "-c", "cp /workspace/subgraph-config-{}/subgraph_{}.yaml /workspace/subgraph/".format(chain["key"], chain["key"])]
             )
         )
         
