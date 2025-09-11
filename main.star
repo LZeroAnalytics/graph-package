@@ -9,7 +9,7 @@ def run(plan, ethereum_args=None, network_type="bloctopus", rpc_url=None, env="m
     plan.print("Running graph package on branch {}".format(env))
 
     postgres = import_module("github.com/tiljrd/postgres-package@{}/main.star".format(env))
-    ethereum = import_module("github.com/LZeroAnalytics/ethereum-package@{}/main.star".format(env))
+    ethereum = import_module("github.com/0xBloctopus/ethereum-package@{}/main.star".format(env))
 
     if not rpc_url:
         plan.print("Running the ethereum package")
